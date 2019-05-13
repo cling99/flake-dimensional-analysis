@@ -1,0 +1,429 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>getAFMFlakes</title><meta name="generator" content="MATLAB 9.5"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2019-05-13"><meta name="DC.source" content="getAFMFlakes.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><pre class="codeinput"><span class="keyword">function</span> afmImgInfo = getAFMFlakes(file, contrast, edgeMethod, fudgeFactor,<span class="keyword">...</span>
+                                    filterRadius, dilateRadius)
+ibwRaw = IBWread(file);
+
+<span class="comment">% For calculating flake area and dimensions</span>
+pixelX = ibwRaw.dx(1);
+pixelY = ibwRaw.dx(2);
+pixelArea = pixelX * pixelY;
+
+amplitudeData = ibwRaw.y(:,:,1);
+[BWfinal, Segout] = imgProcessFlakes();
+<span class="comment">%figure, imshow(BWfinal), title('segmented image');</span>
+<span class="comment">%figure, imshow(Segout), title('outlined original image');</span>
+
+<span class="comment">% For Labeling Flakes, Converts to RGB so we can write directly on img</span>
+h = figure(1);
+set(h,<span class="string">'visible'</span>,<span class="string">'off'</span>), imshow(Segout), title(<span class="string">'outlined original image (labeled)'</span>);
+<span class="comment">% Increase size</span>
+<span class="comment">% set(h,'Position',[10 10 1000 1000])</span>
+
+<span class="comment">% Finds and label connected components (starts at 1)</span>
+[connRegLabel, connRegNum] = bwlabel(BWfinal);
+
+<span class="comment">% Since flakes might be rejected, flakeInfo array unallocated</span>
+flakeInfo = [];
+flakeNum = 0;
+<span class="keyword">for</span> ii = 1:connRegNum
+    flakeLogicArray = (connRegLabel == ii);
+
+    <span class="comment">% If "Flake" is greater than a single spot</span>
+    <span class="keyword">if</span> nnz(flakeLogicArray) &gt; 9
+        <span class="comment">% Finds flake area by summing across the number of pixels considered to</span>
+        <span class="comment">% be part of the flake</span>
+        flakeArea = pixelArea * sum(sum(flakeLogicArray));
+
+        <span class="comment">% Finds the max height and mean height</span>
+        correctedAmpData = correctAmplitude2(amplitudeData, flakeLogicArray);
+
+        maxHeight = max(max(correctedAmpData(flakeLogicArray)));
+        <span class="comment">% Converts array to vector first</span>
+        medianHeight = median(reshape(correctedAmpData(flakeLogicArray),<span class="keyword">...</span>
+                                      [], 1));
+        meanHeight = mean(mean(correctedAmpData(flakeLogicArray)));
+
+        <span class="comment">% Finds Flake Volume</span>
+        flakeVol = sum(sum(1e9 * correctedAmpData(flakeLogicArray)<span class="keyword">...</span>
+                    .* (pixelArea * (1e9)^2)));
+
+        <span class="comment">% Approximates a length using region props</span>
+        [flakePosRow, flakePosCol] = find(flakeLogicArray);
+        flakeLength = findMaxLength([flakePosRow, flakePosCol]);
+
+        <span class="comment">% Marks Flake on image</span>
+        flakeNum = flakeNum + 1;
+        flakeStrNum = num2str(flakeNum);
+        midEl = floor(length(flakePosCol)/2);
+
+        <span class="comment">% Inserts labels to labeled image</span>
+        text(flakePosCol(midEl), flakePosRow(midEl), flakeStrNum,<span class="keyword">...</span>
+                        <span class="string">'color'</span>, <span class="string">'r'</span>,<span class="string">'fontsize'</span>,12);
+
+        flakeInfo(end+1,:) = [flakeArea, maxHeight, meanHeight,<span class="keyword">...</span>
+                                flakeLength, flakeVol, medianHeight]';
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+
+<span class="comment">% Take a screenshot of the image, rotate to match AFM</span>
+camroll(90); labeledImgNum = getframe;
+close(1);
+
+flakeInfo(:,2:4) = flakeInfo(:,2:4) .* 1e9; <span class="comment">% Scales to nm</span>
+flakeInfo(:,1) = flakeInfo(:,1) .* (1e9)^2; <span class="comment">% Scales to nm^2</span>
+
+afmImgInfo.area = flakeInfo(:,1);
+afmImgInfo.length = flakeInfo(:,4);
+afmImgInfo.meanThick = flakeInfo(:,2);
+afmImgInfo.medianThick = flakeInfo(:,6);
+afmImgInfo.maxThick = flakeInfo(:,3);
+afmImgInfo.volume = flakeInfo(:,5);
+afmImgInfo.rawAFMData = amplitudeData;
+<span class="comment">% Rotate to match with Gwyddion</span>
+afmImgInfo.labeledFlakes = imrotate(Segout, 90);
+afmImgInfo.labeledFlakesNum = labeledImgNum.cdata;
+afmImgInfo.flakeInfo = flakeInfo;
+
+<span class="comment">% Uses matlab's image processing toolbox to get flake locations</span>
+    <span class="keyword">function</span> [BWfinal, Segout, overlay] = imgProcessFlakes()
+        <span class="comment">%figure, surf(amplitudeData), title('Raw Amplitude Data');</span>
+
+        img = mat2gray(amplitudeData);
+
+        <span class="comment">% Increase contrast if option selected</span>
+        <span class="keyword">if</span> contrast
+            img = imadjust(img); <span class="comment">% Increase contrast</span>
+        <span class="keyword">end</span>
+        <span class="comment">%figure, imshow(img), title('Unfiltered Image');</span>
+        img = wiener2(img, [filterRadius filterRadius]);
+        <span class="comment">%figure, imshow(img), title('Adaptive filtered Image');</span>
+
+        <span class="comment">% Code from matlab example for detecting cell</span>
+        <span class="comment">% https://www.mathworks.com/help/images/detecting-a-cell-using-image-segmentation.html</span>
+
+        [~, threshold] = edge(img, edgeMethod);
+        BWs = edge(img,edgeMethod, threshold * fudgeFactor);
+        <span class="comment">%figure, imshow(BWs), title('binary gradient mask');</span>
+
+        <span class="comment">% Dilating the image</span>
+        se90 = strel(<span class="string">'line'</span>, dilateRadius, 90);
+        se0 = strel(<span class="string">'line'</span>, dilateRadius, 0);
+
+        BWsdil = imdilate(BWs, [se90 se0]);
+        <span class="comment">%figure, imshow(BWsdil), title('dilated gradient mask');</span>
+
+        <span class="comment">% Fill Interior Gaps</span>
+        BWdfill = imfill(BWsdil, <span class="string">'holes'</span>);
+        <span class="comment">%figure, imshow(BWdfill);</span>
+        <span class="comment">%title('binary image with filled holes');</span>
+
+        <span class="comment">% Removing objects on border</span>
+        BWnobord = imclearborder(BWdfill, 4);
+        <span class="comment">%figure, imshow(BWnobord), title('cleared border image');</span>
+
+        <span class="comment">% Smoothen the objects</span>
+        seD = strel(<span class="string">'diamond'</span>,1);
+        BWfinal = imerode(BWnobord,seD);
+        BWfinal = imerode(BWfinal,seD);
+        <span class="comment">%figure, imshow(BWfinal), title('segmented image');</span>
+
+        <span class="comment">% Applies various masks for output</span>
+        BWoutline = bwperim(BWfinal);
+        Segout = img;
+        Segout(BWoutline) = 255;
+        <span class="comment">%figure, imshow(Segout), title('outlined original image');</span>
+
+        <span class="comment">% Label Overlay</span>
+        overlay = labeloveraly(img, BWfinal);
+    <span class="keyword">end</span>
+
+<span class="comment">% Finds the max length of a flake given a set of points</span>
+<span class="comment">% INPUTS    POS: All positions of the flake, as a list of position vectors</span>
+<span class="comment">% OUTPUTS   LENGTH: The maximum length of the flake in mm</span>
+<span class="keyword">function</span> maxLength = findMaxLength(pos)
+<span class="comment">% If only 1 pixel (1 row), NaN</span>
+numPixels = size(pos,1);
+
+maxLength = -inf;
+<span class="comment">% Iterates through each position combos</span>
+<span class="keyword">for</span> ii = 1:numPixels
+    <span class="keyword">for</span> jj = ii:numPixels
+        distance = sqrt((pixelX * (pos(ii,1) - pos(jj,1))).^2 +<span class="keyword">...</span>
+            (pixelY * (pos(ii,2) - pos(jj,2))).^2 );
+        <span class="keyword">if</span> distance &gt; maxLength
+            maxLength = distance;
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+<span class="keyword">end</span>
+<span class="keyword">end</span>
+
+<span class="comment">% Returns amplitude array scale by lowest element in filter</span>
+<span class="comment">%   INPUTS  A: 2D matrix to create linear base</span>
+<span class="comment">%           filter: A logic matrix returned by BWLabel</span>
+<span class="comment">%   OUTPUTS correctA: A with corrected height around filter</span>
+<span class="comment">%           a, b, c: coefficient for vector multiplication</span>
+<span class="keyword">function</span> correctedMat = correctAmplitude2(A, filter)
+minVal = min(min(A(filter)));
+correctedMat = A - minVal;
+<span class="keyword">end</span>
+
+<span class="comment">% Converts an binary BW image to an RGB image</span>
+<span class="comment">% INPUTS    A binary BW image</span>
+<span class="comment">% OUTPUTS   An rgb image</span>
+<span class="keyword">function</span> rgb = bw2rgb(bw)
+    grayImage = 255 * uint8(bw);
+    rgb = cat(3, grayImage, grayImage, grayImage);
+<span class="keyword">end</span>
+</pre><pre class="codeoutput error">Not enough input arguments.
+
+Error in getAFMFlakes (line 3)
+ibwRaw = IBWread(file);
+</pre><p class="footer"><br><a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2018b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+function afmImgInfo = getAFMFlakes(file, contrast, edgeMethod, fudgeFactor,...
+                                    filterRadius, dilateRadius)
+ibwRaw = IBWread(file);
+
+% For calculating flake area and dimensions
+pixelX = ibwRaw.dx(1);
+pixelY = ibwRaw.dx(2);
+pixelArea = pixelX * pixelY;
+
+amplitudeData = ibwRaw.y(:,:,1);
+[BWfinal, Segout] = imgProcessFlakes();
+%figure, imshow(BWfinal), title('segmented image');
+%figure, imshow(Segout), title('outlined original image');
+
+% For Labeling Flakes, Converts to RGB so we can write directly on img
+h = figure(1);
+set(h,'visible','off'), imshow(Segout), title('outlined original image (labeled)');
+% Increase size
+% set(h,'Position',[10 10 1000 1000])
+
+% Finds and label connected components (starts at 1)
+[connRegLabel, connRegNum] = bwlabel(BWfinal);
+
+% Since flakes might be rejected, flakeInfo array unallocated
+flakeInfo = [];
+flakeNum = 0;
+for ii = 1:connRegNum
+    flakeLogicArray = (connRegLabel == ii);
+    
+    % If "Flake" is greater than a single spot
+    if nnz(flakeLogicArray) > 9
+        % Finds flake area by summing across the number of pixels considered to
+        % be part of the flake
+        flakeArea = pixelArea * sum(sum(flakeLogicArray));
+        
+        % Finds the max height and mean height
+        correctedAmpData = correctAmplitude2(amplitudeData, flakeLogicArray);
+        
+        maxHeight = max(max(correctedAmpData(flakeLogicArray)));
+        % Converts array to vector first
+        medianHeight = median(reshape(correctedAmpData(flakeLogicArray),...
+                                      [], 1));
+        meanHeight = mean(mean(correctedAmpData(flakeLogicArray)));
+        
+        % Finds Flake Volume
+        flakeVol = sum(sum(1e9 * correctedAmpData(flakeLogicArray)...
+                    .* (pixelArea * (1e9)^2)));
+        
+        % Approximates a length using region props
+        [flakePosRow, flakePosCol] = find(flakeLogicArray);
+        flakeLength = findMaxLength([flakePosRow, flakePosCol]);
+        
+        % Marks Flake on image
+        flakeNum = flakeNum + 1;
+        flakeStrNum = num2str(flakeNum);
+        midEl = floor(length(flakePosCol)/2);
+        
+        % Inserts labels to labeled image
+        text(flakePosCol(midEl), flakePosRow(midEl), flakeStrNum,...
+                        'color', 'r','fontsize',12);
+        
+        flakeInfo(end+1,:) = [flakeArea, maxHeight, meanHeight,...
+                                flakeLength, flakeVol, medianHeight]';
+    end
+end
+
+% Take a screenshot of the image, rotate to match AFM
+camroll(90); labeledImgNum = getframe;
+close(1);
+
+flakeInfo(:,2:4) = flakeInfo(:,2:4) .* 1e9; % Scales to nm
+flakeInfo(:,1) = flakeInfo(:,1) .* (1e9)^2; % Scales to nm^2
+
+afmImgInfo.area = flakeInfo(:,1);
+afmImgInfo.length = flakeInfo(:,4);
+afmImgInfo.meanThick = flakeInfo(:,2);
+afmImgInfo.medianThick = flakeInfo(:,6);
+afmImgInfo.maxThick = flakeInfo(:,3);
+afmImgInfo.volume = flakeInfo(:,5);
+afmImgInfo.rawAFMData = amplitudeData;
+% Rotate to match with Gwyddion
+afmImgInfo.labeledFlakes = imrotate(Segout, 90); 
+afmImgInfo.labeledFlakesNum = labeledImgNum.cdata;
+afmImgInfo.flakeInfo = flakeInfo;
+                   
+% Uses matlab's image processing toolbox to get flake locations
+    function [BWfinal, Segout, overlay] = imgProcessFlakes()
+        %figure, surf(amplitudeData), title('Raw Amplitude Data');
+        
+        img = mat2gray(amplitudeData);
+        
+        % Increase contrast if option selected
+        if contrast
+            img = imadjust(img); % Increase contrast
+        end
+        %figure, imshow(img), title('Unfiltered Image');
+        img = wiener2(img, [filterRadius filterRadius]);
+        %figure, imshow(img), title('Adaptive filtered Image');
+        
+        % Code from matlab example for detecting cell
+        % https://www.mathworks.com/help/images/detecting-a-cell-using-image-segmentation.html
+        
+        [~, threshold] = edge(img, edgeMethod);
+        BWs = edge(img,edgeMethod, threshold * fudgeFactor);
+        %figure, imshow(BWs), title('binary gradient mask');
+        
+        % Dilating the image
+        se90 = strel('line', dilateRadius, 90);
+        se0 = strel('line', dilateRadius, 0);
+        
+        BWsdil = imdilate(BWs, [se90 se0]);
+        %figure, imshow(BWsdil), title('dilated gradient mask');
+        
+        % Fill Interior Gaps
+        BWdfill = imfill(BWsdil, 'holes');
+        %figure, imshow(BWdfill);
+        %title('binary image with filled holes');
+        
+        % Removing objects on border
+        BWnobord = imclearborder(BWdfill, 4);
+        %figure, imshow(BWnobord), title('cleared border image');
+        
+        % Smoothen the objects
+        seD = strel('diamond',1);
+        BWfinal = imerode(BWnobord,seD);
+        BWfinal = imerode(BWfinal,seD);
+        %figure, imshow(BWfinal), title('segmented image');
+        
+        % Applies various masks for output
+        BWoutline = bwperim(BWfinal);
+        Segout = img;
+        Segout(BWoutline) = 255;
+        %figure, imshow(Segout), title('outlined original image');
+        
+        % Label Overlay
+        overlay = labeloveraly(img, BWfinal);
+    end
+
+% Finds the max length of a flake given a set of points
+% INPUTS    POS: All positions of the flake, as a list of position vectors
+% OUTPUTS   LENGTH: The maximum length of the flake in mm
+function maxLength = findMaxLength(pos)
+% If only 1 pixel (1 row), NaN
+numPixels = size(pos,1);
+
+maxLength = -inf;
+% Iterates through each position combos
+for ii = 1:numPixels
+    for jj = ii:numPixels
+        distance = sqrt((pixelX * (pos(ii,1) - pos(jj,1))).^2 +...
+            (pixelY * (pos(ii,2) - pos(jj,2))).^2 );
+        if distance > maxLength
+            maxLength = distance;
+        end
+    end
+end
+end
+end
+
+% Returns amplitude array scale by lowest element in filter
+%   INPUTS  A: 2D matrix to create linear base
+%           filter: A logic matrix returned by BWLabel
+%   OUTPUTS correctA: A with corrected height around filter
+%           a, b, c: coefficient for vector multiplication
+function correctedMat = correctAmplitude2(A, filter)
+minVal = min(min(A(filter)));
+correctedMat = A - minVal;
+end
+
+% Converts an binary BW image to an RGB image
+% INPUTS    A binary BW image
+% OUTPUTS   An rgb image
+function rgb = bw2rgb(bw)
+    grayImage = 255 * uint8(bw);
+    rgb = cat(3, grayImage, grayImage, grayImage);
+end
+
+##### SOURCE END #####
+--></body></html>

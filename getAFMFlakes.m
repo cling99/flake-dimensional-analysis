@@ -8,15 +8,15 @@ pixelY = ibwRaw.dx(2);
 pixelArea = pixelX * pixelY;
 
 amplitudeData = ibwRaw.y(:,:,1);
-[BWfinal, Segout] = imgProcessFlakes();
+[BWfinal, Segout, overlay] = imgProcessFlakes();
 %figure, imshow(BWfinal), title('segmented image');
 %figure, imshow(Segout), title('outlined original image');
 
 % For Labeling Flakes, Converts to RGB so we can write directly on img
 h = figure(1);
-set(h,'visible','off'), imshow(Segout), title('outlined original image (labeled)');
+set(h,'visible','off'), imshow(overlay), title('outlined original image (labeled)');
 % Increase size
-set(h,'Position',[10 10 1000 1000])
+% set(h,'Position',[10 10 1000 1000])
 
 % Finds and label connected components (starts at 1)
 [connRegLabel, connRegNum] = bwlabel(BWfinal);
@@ -37,6 +37,9 @@ for ii = 1:connRegNum
         correctedAmpData = correctAmplitude2(amplitudeData, flakeLogicArray);
         
         maxHeight = max(max(correctedAmpData(flakeLogicArray)));
+        % Converts array to vector first
+        medianHeight = median(reshape(correctedAmpData(flakeLogicArray),...
+                                      [], 1));
         meanHeight = mean(mean(correctedAmpData(flakeLogicArray)));
         
         % Finds Flake Volume
@@ -54,33 +57,35 @@ for ii = 1:connRegNum
         
         % Inserts labels to labeled image
         text(flakePosCol(midEl), flakePosRow(midEl), flakeStrNum,...
-                        'color', 'r','fontsize',12);
+                        'color', 'r','fontsize',9);
         
         flakeInfo(end+1,:) = [flakeArea, maxHeight, meanHeight,...
-                                flakeLength, flakeVol]';
+                                flakeLength, flakeVol, medianHeight]';
     end
 end
 
-% Take a screenshot of the image
+% Take a screenshot of the image, rotate to match AFM
 camroll(90); labeledImgNum = getframe;
 close(1);
 
-flakeInfo(:,2:4) = flakeInfo(:,2:4) .* 1e9; % Scales to nm
+flakeInfo(:,[2:4 6]) = flakeInfo(:,[2:4, 6]) .* 1e9; % Scales to nm
 flakeInfo(:,1) = flakeInfo(:,1) .* (1e9)^2; % Scales to nm^2
 
 afmImgInfo.area = flakeInfo(:,1);
 afmImgInfo.length = flakeInfo(:,4);
 afmImgInfo.meanThick = flakeInfo(:,2);
+afmImgInfo.medianThick = flakeInfo(:,6);
 afmImgInfo.maxThick = flakeInfo(:,3);
 afmImgInfo.volume = flakeInfo(:,5);
 afmImgInfo.rawAFMData = amplitudeData;
 % Rotate to match with Gwyddion
 afmImgInfo.labeledFlakes = imrotate(Segout, 90); 
 afmImgInfo.labeledFlakesNum = labeledImgNum.cdata;
+
 afmImgInfo.flakeInfo = flakeInfo;
                    
 % Uses matlab's image processing toolbox to get flake locations
-    function [BWfinal, Segout] = imgProcessFlakes()
+    function [BWfinal, Segout, overlay] = imgProcessFlakes()
         %figure, surf(amplitudeData), title('Raw Amplitude Data');
         
         img = mat2gray(amplitudeData);
@@ -122,10 +127,22 @@ afmImgInfo.flakeInfo = flakeInfo;
         BWfinal = imerode(BWfinal,seD);
         %figure, imshow(BWfinal), title('segmented image');
         
+        % Applies various masks for output
         BWoutline = bwperim(BWfinal);
-        Segout = img;
-        Segout(BWoutline) = 255;
+        SegoutR = img;
+        SegoutG = img;
+        SegoutB = img;
+        
+        % Converts Segout from white to Red
+        SegoutR(BWoutline) = 255;
+        SegoutG(BWoutline) = 0;
+        SegoutB(BWoutline) = 0;
+        Segout = cat(3, SegoutR, SegoutG, SegoutB);
+        
         %figure, imshow(Segout), title('outlined original image');
+        
+        % Label Overlay
+        overlay = labeloverlay(img, BWfinal);
     end
 
 % Finds the max length of a flake given a set of points
