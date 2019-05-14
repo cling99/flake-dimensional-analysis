@@ -1,5 +1,13 @@
 function afmImgInfo = getAFMFlakes(file, contrast, edgeMethod, fudgeFactor,...
                                     filterRadius, dilateRadius)
+
+% Adds IBW files to path, 
+% supresses warnings from APP version which stores these file in
+% different locations
+warning('off', 'MATLAB:mpath:nameNonexistentOrNotADirectory');
+addpath('.\IBW', '-frozen');
+warning('on', 'MATLAB:mpath:nameNonexistentOrNotADirectory');
+
 ibwRaw = IBWread(file);
 
 % For calculating flake area and dimensions
@@ -13,7 +21,7 @@ amplitudeData = ibwRaw.y(:,:,1);
 %figure, imshow(Segout), title('outlined original image');
 
 % For Labeling Flakes, Converts to RGB so we can write directly on img
-h = figure(1);
+h = figure;
 set(h,'visible','off'), imshow(overlay), title('outlined original image (labeled)');
 % Increase size
 % set(h,'Position',[10 10 1000 1000])
@@ -21,6 +29,7 @@ set(h,'visible','off'), imshow(overlay), title('outlined original image (labeled
 % Finds and label connected components (starts at 1)
 [connRegLabel, connRegNum] = bwlabel(BWfinal);
 
+%% Iterates through different detected flakes on the image
 % Since flakes might be rejected, flakeInfo array unallocated
 flakeInfo = [];
 flakeNum = 0;
@@ -57,7 +66,9 @@ for ii = 1:connRegNum
         
         % Inserts labels to labeled image
         text(flakePosCol(midEl), flakePosRow(midEl), flakeStrNum,...
-                        'color', 'r','fontsize',9);
+                        'color', 'r',...
+                        'fontsize', floor(min(size(BWfinal)) / 30));
+                        % Alters font size based on image size
         
         flakeInfo(end+1,:) = [flakeArea, maxHeight, meanHeight,...
                                 flakeLength, flakeVol, medianHeight]';
@@ -84,7 +95,7 @@ afmImgInfo.labeledFlakesNum = labeledImgNum.cdata;
 
 afmImgInfo.flakeInfo = flakeInfo;
                    
-% Uses matlab's image processing toolbox to get flake locations
+%% Uses matlab's image processing toolbox to get flake locations
     function [BWfinal, Segout, overlay] = imgProcessFlakes()
         %figure, surf(amplitudeData), title('Raw Amplitude Data');
         
@@ -145,7 +156,7 @@ afmImgInfo.flakeInfo = flakeInfo;
         overlay = labeloverlay(img, BWfinal);
     end
 
-% Finds the max length of a flake given a set of points
+%% Finds the max length of a flake given a set of points
 % INPUTS    POS: All positions of the flake, as a list of position vectors
 % OUTPUTS   LENGTH: The maximum length of the flake in mm
 function maxLength = findMaxLength(pos)
@@ -166,7 +177,7 @@ end
 end
 end
 
-% Returns amplitude array scale by lowest element in filter
+%% Returns amplitude array scale by lowest element in filter
 %   INPUTS  A: 2D matrix to create linear base
 %           filter: A logic matrix returned by BWLabel
 %   OUTPUTS correctA: A with corrected height around filter
@@ -176,7 +187,7 @@ minVal = min(min(A(filter)));
 correctedMat = A - minVal;
 end
 
-% Converts an binary BW image to an RGB image
+%% Converts an binary BW image to an RGB image
 % INPUTS    A binary BW image
 % OUTPUTS   An rgb image
 function rgb = bw2rgb(bw)
