@@ -1,6 +1,28 @@
 function afmImgInfo = getAFMFlakes(file, contrast, edgeMethod, fudgeFactor,...
                                     filterRadius, dilateRadius)
-
+%getAFMFlakes 
+% Returns a structure with various flake data from an AFM file
+%
+% ARGUMENTS
+%   file            File path to IBW AFM scan
+%   contrast        Toggle for increasing contrast during image processing
+%   edgeMethod      Algorithm to detect edges in image for flake identification
+%   fudgeFactor     Sensitivity of edge detection
+%   filterRadius    Noise removal filter radius (Weiner filter)
+%   dilateRadius    Dilation factor of identified flakes
+%
+% RETURNS
+% afmImgInfo.   area            List of flake areas
+%               length          List of flake lengths
+%               meanThick       List of mean flake thicknesses
+%               medianThick     List of median flake thicknesses
+%               maxThick        List of maximum flake thicknesses
+%               volume          List of flake volumes
+%               rawAFMData      The raw height information from AFM
+%               labeledFlakes   An image with identified flakes outlined 
+%               labeledFlakesNum An image with identified flakes colored and numbered
+%               flakeInfo       A 2D array of sorted flake information for GUI display
+                                
 % Adds IBW files to path, 
 % supresses warnings from APP version which stores these file in
 % different locations
