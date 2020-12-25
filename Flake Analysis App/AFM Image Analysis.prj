@@ -1,5 +1,5 @@
 <deployment-project plugin="plugin.apptool" plugin-version="1.0">
-  <configuration build-checksum="1712801603" file="D:\Users\leoli\Documents\NU\2018-2019\Lab\AFM Reader\AFM Image Analysis Tool\flake-dimensional-analysis\AFM Image Analysis.prj" location="D:\Users\leoli\Documents\NU\2018-2019\Lab\AFM Reader\AFM Image Analysis Tool\flake-dimensional-analysis" name="AFM Image Analysis" target="target.mlapps" target-name="Package App">
+  <configuration build-checksum="1712801603" file="D:\User Files\leoli\Documents\NU\2018-2019\Lab\AFM Reader\AFM Image Analysis Tool\flake-dimensional-analysis\Flake Analysis App\AFM Image Analysis.prj" location="D:\User Files\leoli\Documents\NU\2018-2019\Lab\AFM Reader\AFM Image Analysis Tool\flake-dimensional-analysis\Flake Analysis App" name="AFM Image Analysis" target="target.mlapps" target-name="Package App">
     <param.appname>AFM Image Analysis</param.appname>
     <param.authnamewatermark>Leo Ling</param.authnamewatermark>
     <param.email>leo.ling@u.northwestern.edu</param.email>
@@ -12,7 +12,7 @@
     </param.icons>
     <param.summary>Image processing GUI for flake identification from AFM .IBW files</param.summary>
     <param.description>This GUI uses image segementation to optically detect flakes on an AFM image and report flake length, thickness, area, and volume. Exports labeled flake image, flake data, and configuration used to find flakes.</param.description>
-    <param.screenshot>D:\Users\leoli\Documents\NU\2018-2019\Lab\AFM Reader\GUI Pic3.PNG</param.screenshot>
+    <param.screenshot />
     <param.version>1.2</param.version>
     <param.products.name>
       <item>Image Processing Toolbox</item>
@@ -21,13 +21,14 @@
       <item>17</item>
     </param.products.id>
     <param.products.version>
-      <item>10.3</item>
+      <item>10.4</item>
     </param.products.version>
     <param.platforms />
-    <param.output>D:\Users\leoli\Documents\NU\2018-2019\Lab\AFM Reader\AFM Image Analysis Tool\flake-dimensional-analysis</param.output>
+    <param.output>${PROJECT_ROOT}</param.output>
     <param.guid>5e24c6e5-2bdd-46b1-8a95-f0d83ddf3a50</param.guid>
     <unset>
       <param.company />
+      <param.screenshot />
       <param.platforms />
       <param.output />
     </unset>
@@ -43,11 +44,11 @@
     <fileset.resources />
     <fileset.package />
     <build-deliverables>
-      <file location="D:\Users\leoli\Documents\NU\2018-2019\Lab\AFM Reader\AFM Image Analysis Tool" name="flake-dimensional-analysis" optional="false">D:\Users\leoli\Documents\NU\2018-2019\Lab\AFM Reader\AFM Image Analysis Tool\flake-dimensional-analysis</file>
+      <file location="D:\User Files\leoli\Documents\NU\2018-2019\Lab\AFM Reader\AFM Image Analysis Tool\flake-dimensional-analysis" name="Flake Analysis App" optional="false">D:\User Files\leoli\Documents\NU\2018-2019\Lab\AFM Reader\AFM Image Analysis Tool\flake-dimensional-analysis\Flake Analysis App</file>
     </build-deliverables>
     <workflow />
     <matlab>
-      <root>D:\Programs\MATLAB</root>
+      <root>D:\Non-Essential Program Files\MATLAB</root>
       <toolboxes />
     </matlab>
     <platform>
