@@ -1,5 +1,6 @@
 # Flake Dimensional Analysis GUI
 Flake Identification and measurement GUI using Matlab's image processing toolbox to find and quantify flakes in an AFM .IBW scan.
+### The Image Processing Toolbox is required
 
 ## Quick Install (MATLAB R2012b? and Beyond)
 Under ".\Flake Analysis App" open "AFM Image Analysis" using MATLAB, this will install the GUI. 
